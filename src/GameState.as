@@ -38,7 +38,7 @@
 		protected const MAX_GAP_WITH_PLAT_LENGTH:int = 10;
 		protected const MIN_GAP_WITH_PLAT_LENGTH:int = 6;
 		protected const DEFAULT_PLAT_HEIGHT:int = 4;
-		public const MAP_WIDTH:int = 250;
+		public const MAP_WIDTH:int = 50;
 		protected const ZOMBIE_TYPES:int = 2;
 		protected const ZOMBIE_KILL_POINTS:int = 50;
 		protected var time:Number = 0;
@@ -78,14 +78,27 @@
 			player  = new Player(this);
 			this.add(player);
 			
-			var startingHeight:int = (Math.random() * 7) + 2;
-			leftWizardMap.loadMap(generateWizardMap(startingHeight), data_tiles, 16, 16);
-			
-			
-			var generated:Array = generateMap(MAP_WIDTH, DEFAULT_PLAT_HEIGHT);
+			var startingHeight:int = (Math.random() * 5) + 2;
+			var rightWizardMapLength:int = int(Math.random() * 10) + 10;
+			var leftWizardMapLength:int = int(Math.random() * 10) + 10;
+			var leftWizardGenerated:Array = generateWizardMap(startingHeight, false, leftWizardMapLength, rightWizardMapLength);
+			var leftWizardMapString:String = leftWizardGenerated[0];
+
+			leftWizardMap.loadMap(leftWizardMapString, data_tiles, 16, 16);
+
+
+			var generated:Array = generateMap(MAP_WIDTH, leftWizardMapLength, rightWizardMapLength, startingHeight);
 			var mapString:String = generated[0];
 			var	zombies:Array = generated[1];
 			var zombieWallsString:String = generated[2];
+			var endingHeight:int = generated[3];
+			
+						
+			var rightWizardGenerated:Array = generateWizardMap(endingHeight, true, rightWizardMapLength, leftWizardMapLength);
+			var rightWizardMapString:String = rightWizardGenerated[0];
+			
+			rightWizardMap.loadMap(rightWizardMapString, data_tiles, 16, 16);
+			
 			
 			// new data_map
 			map.loadMap(mapString, data_tiles, 16, 16);
@@ -102,29 +115,39 @@
 				}
 			}
 			
-			var offset:int = leftWizardMap.width + 16;
+			var offset:int = leftWizardMapLength * TILE_SIZE + 16;
 			
-			makePlatforms(platformLocations, offset);
-			makeZombies(zombies, offset);
+			makePlatforms(platformLocations, 0);
+			makeZombies(zombies, 0);
 			
 			map.collideIndex = 32;
 			map.fixed = true;
-			map.x = offset;
-			zombieMap.x = offset;
+			//rightWizardMap.x = offset + MAP_WIDTH * TILE_SIZE;
+			//map.x = offset;
+			//zombieMap.x = offset;
 			
 			leftWizardMap.collideIndex = 32;
 			leftWizardMap.fixed = true;
 			
+			rightWizardMap.collideIndex = 32;
+			rightWizardMap.fixed = true;
+			
 		
-			this.add(leftWizardMap);
+			mapLayer.add(leftWizardMap);
+			mapLayer.add(rightWizardMap);
 			mapLayer.add(map);
+			
 			
 			zombieMapLayer.add(zombieMap);
 	
 			player.y = 75;
 			player.x = 100;
 			
-			FlxG.followBounds( 16, 0, TILE_SIZE * MAP_WIDTH + offset, 160);
+			FlashConnect.trace("w: " + MAP_WIDTH);
+			FlashConnect.trace("l: " + leftWizardMapLength);
+			FlashConnect.trace("r: " + rightWizardMapLength);
+			
+			FlxG.followBounds( 0, 0, TILE_SIZE * (MAP_WIDTH + leftWizardMapLength + rightWizardMapLength), 160);
 			
 			FlxG.follow(player);
 			this.add(scoreText);
@@ -167,20 +190,19 @@
 			}
 		}
 		
-		public function generateWizardMap(height:int) : String {
+		public function generateWizardMap(height:int, flip:Boolean, length:int, rightLength:int) : Array {
 			var map:Array = new Array();
-			var length:int = int(Math.random() * 10) + 10;
-			for (var i:int = 0; i < length; i++) {
+			for (var i:int = 0; i < length + MAP_WIDTH; i++) {
 				map.push(new Array());
 			}
 			
-			for (i = 0; i < length; i++) {
+			for (i = 0; i < length + MAP_WIDTH + rightLength; i++) {
 				for (var j:int = 0; j < SCREEN_HEIGHT; j++) {
 					map[j][i] = 0;
 				}
 			}
 			
-			for (i = 0; i < length; i++) {
+			for (i = 0; i < length - 1; i++) {
 				for (j = 0; j < SCREEN_HEIGHT; j++) {
 					if (j == SCREEN_HEIGHT - height - 1) {
 						// Environment tiles.
@@ -199,25 +221,32 @@
 			// Wizard
 			map[SCREEN_HEIGHT - height - 1][5] = PLATFORM_END;
 			
-						// Map to string.
+			if (flip) {
+				for (i = 0; i < map.length; i++) {
+					(map[i] as Array).reverse();
+				}
+			}
+			
+			// Map to string.
 			var out:String = "";
 			for (i = 0; i < 10 ; i++) {
-				for (j = 0; j < length; j++) {
+				for (j = 0; j < length + MAP_WIDTH + rightLength; j++) {
 					if (map[i][j] < 10) {
-						out += "";
+						out += "0";
 					}
+					
 					out += map[i][j];
-					if (j < length-1)
+					if (j < length + MAP_WIDTH + rightLength -1)
 						out += ",";
 				}
 				out += "\n";
 			}
 			FlashConnect.trace(out);
-			return out;
+			return [out];
 		}
 		
 		
-		public function generateMap(length:int, startingHeight:int) : Array {
+		public function generateMap(length:int, leftOffset:int, rightOffset:int, startingHeight:int) : Array {
 			var map:Array = new Array();
 			var zombies:Array = new Array();
 			var zombieWalls:Array = new Array();
@@ -231,7 +260,7 @@
 			
 			// Clear the map
 			for (i = 0; i < 10 ; i++) {
-				for (var j:int = 0; j < length; j++) {
+				for (var j:int = 0; j < length + rightOffset + leftOffset; j++) {
 					map[i][j] = 0;
 					zombies[i][j] = 0;
 					zombieWalls[i][j] = 0;
@@ -244,8 +273,8 @@
 			var oldDelta:int;
 			var gapLength:int = 0;
 			var dirBias:String = "DOWN";
-			
-			for (i = 0; i < length; i++) {
+			zombieWalls[SCREEN_HEIGHT - platHeight - 1][leftOffset-1] = 1;
+			for (i = leftOffset; i < length + leftOffset - 1; i++) {
 				if (gapLength == 1) {
 					zombieWalls[SCREEN_HEIGHT - platHeight - 1][i] = 1;
 				}
@@ -267,6 +296,8 @@
 						}
 					}
 					platLength--;
+				} if (i == length + leftOffset - 2) {
+					zombieWalls[SCREEN_HEIGHT - platHeight - 1][i + 1] = 1;
 				} if (platLength == 0) {
 			
 					zombieWalls[SCREEN_HEIGHT - platHeight - 1][i + 1] = 1;
@@ -294,7 +325,7 @@
 					
 					var gaplens:Array = [0, 1, 2, 2, 3, 3, 3];
 					gapLength = gaplens[Math.round(Math.random() * (gaplens.length - 1))];
-					if (Math.random() < 0.3) {
+					if (Math.random() < 0.3 &&  i + platLength < length + leftOffset - 1) {
 						gapLength = Math.round(Math.random() * (MAX_GAP_WITH_PLAT_LENGTH - MIN_GAP_WITH_PLAT_LENGTH)) + MIN_GAP_WITH_PLAT_LENGTH;
 						if (delta <= 0) {
 							map[SCREEN_HEIGHT - platHeight - 1][i + int(Math.random() * 1) + 2] = PLATFORM_BEGIN;
@@ -304,7 +335,7 @@
 							map[SCREEN_HEIGHT - platHeight + 1][i + gapLength - int(Math.random() * 1) - 2] = PLATFORM_END;
 						}
 					} 
-					if (delta < 1) {
+					if (delta < 1 && i + gapLength + platLength < length + leftOffset - 1) {
 						zombies[SCREEN_HEIGHT - platHeight - 1][i + gapLength + int(Math.random() * platLength) + 1] = int(Math.random() * ZOMBIE_TYPES) + 1;
 					}
 				}
@@ -314,12 +345,14 @@
 			// Map to string.
 			var out:String = "";
 			for (i = 0; i < 10 ; i++) {
-				for (j = 0; j < length; j++) {
+				for (j = 0; j < length + rightOffset + leftOffset; j++) {
 					if (map[i][j] < 10) {
 						out += "";
 					}
+					if (map[i][j] < 10)
+						out += "0";
 					out += map[i][j];
-					if (j < length-1)
+					if (j < length + rightOffset + leftOffset-1)
 						out += ",";
 				}
 				out += "\n";
@@ -327,17 +360,17 @@
 			
 			var zombieWallsOut:String = "";
 			for (i = 0; i < 10 ; i++) {
-				for (j = 0; j < length; j++) {
+				for (j = 0; j < length + rightOffset + leftOffset; j++) {
 					if (zombieWalls[i][j] < 10) {
 						zombieWallsOut += "";
 					}
 					zombieWallsOut += zombieWalls[i][j];
-					if (j < length-1)
+					if (j < length + rightOffset + leftOffset-1)
 						zombieWallsOut += ",";
 				}
 				zombieWallsOut += "\n";
 			}
-			
+			FlashConnect.trace(out);
 			return [out, zombies, zombieWallsOut, platHeight];
 			
 		}
@@ -353,8 +386,8 @@
 				FlxG.score += 10;
 			}
 			scoreText.text = "Score: " + FlxG.score;
+			//leftWizardMap.collide(player);
 			FlxG.collideArray(mapLayer.children(), player);
-			leftWizardMap.collide(player);
 			FlxG.collideArrays(zombieLayer.children(), zombieLayer.children());
 			FlxG.collideArrays(mapLayer.children(), ballLayer.children());
 			FlxG.collideArrays(mapLayer.children(), zombieLayer.children());
