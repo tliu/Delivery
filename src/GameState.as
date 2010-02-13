@@ -9,6 +9,7 @@
 		[Embed(source = "../sound/thunder.mp3")] public static var ThunderMusic:Class;
 		[Embed(source = "../images/bg.png")] public static var bgImage:Class;
 		[Embed(source = "../images/blank.png")] public static var blankImage:Class;
+		[Embed(source = "../images/house.png")] public static var HouseGraphic:Class;
 		
 		protected var map:FlxTilemap = new FlxTilemap();
 		protected var leftWizardMap:FlxTilemap = new FlxTilemap();
@@ -37,6 +38,8 @@
 		protected const MAX_GAP_LENGTH:int = 3;
 		protected const MAX_GAP_WITH_PLAT_LENGTH:int = 10;
 		protected const MIN_GAP_WITH_PLAT_LENGTH:int = 6;
+		protected const WIZARD_HEIGHT:int = 22;
+		protected const HOUSE_HEIGHT:int = 48;
 		protected const DEFAULT_PLAT_HEIGHT:int = 4;
 		public const MAP_WIDTH:int = 50;
 		protected const ZOMBIE_TYPES:int = 2;
@@ -52,8 +55,8 @@
 			// Layer init.
 			zombieLayer = new FlxLayer();
 			zombieMapLayer = new FlxLayer();
-			mapLayer = new FlxLayer();
 			wizardLayer = new FlxLayer();
+			mapLayer = new FlxLayer();
 			bgLayer = new FlxLayer();
 			platformLayer = new FlxLayer();
 			ballLayer = new FlxLayer();
@@ -62,8 +65,8 @@
 			this.add(bgLayer);
 			this.add(zombieMapLayer);
 			this.add(mapLayer);
-			this.add(zombieLayer);
 			this.add(wizardLayer);
+			this.add(zombieLayer);
 			this.add(platformLayer);
 			this.add(ballLayer);
 						
@@ -78,7 +81,7 @@
 			player  = new Player(this);
 			this.add(player);
 			
-			var startingHeight:int = (Math.random() * 5) + 2;
+			var startingHeight:int = int(Math.random() * 5) + 1;
 			var rightWizardMapLength:int = int(Math.random() * 10) + 10;
 			var leftWizardMapLength:int = int(Math.random() * 10) + 10;
 			var leftWizardGenerated:Array = generateWizardMap(startingHeight, false, leftWizardMapLength, rightWizardMapLength);
@@ -114,6 +117,42 @@
 					}
 				}
 			}
+			
+			var house:Boolean = true;
+			for (x = 0; x < leftWizardMap.widthInTiles; x++) {
+				for (y = 0; y < leftWizardMap.heightInTiles; y++) {
+					
+					if (leftWizardMap.getTile(x, y) == PLATFORM_BEGIN || leftWizardMap.getTile(x, y) == PLATFORM_END) {
+						if (house) {
+							bgLayer.add(new FlxSprite(x * TILE_SIZE, (y + 1) * TILE_SIZE - HOUSE_HEIGHT, HouseGraphic));
+							house = false;
+						} else { 
+							wizardLayer.add(new Wizard(x * TILE_SIZE, (y + 1) * TILE_SIZE - WIZARD_HEIGHT, true));
+						}
+						// random grass tile
+						leftWizardMap.setTile(x, y, int(Math.random() * 15) + 12);
+					}
+				}
+			}
+			
+			house = true;
+			for (x = 0; x < rightWizardMap.widthInTiles; x++) {
+				for (y = 0; y < rightWizardMap.heightInTiles; y++) {
+					
+					if (rightWizardMap.getTile(x, y) == PLATFORM_BEGIN || leftWizardMap.getTile(x, y) == PLATFORM_END) {
+
+						if (house) {
+							wizardLayer.add(new Wizard(x * TILE_SIZE, (y + 1) * TILE_SIZE - WIZARD_HEIGHT, false));
+							house = false;
+						} else {
+							bgLayer.add(new FlxSprite(x * TILE_SIZE, (y + 1) * TILE_SIZE - HOUSE_HEIGHT, HouseGraphic));
+						}
+						// random grass tile
+						rightWizardMap.setTile(x, y, int(Math.random() * 15) + 12);
+					}
+				}
+			}
+			
 			
 			var offset:int = leftWizardMapLength * TILE_SIZE + 16;
 			
@@ -206,9 +245,9 @@
 				for (j = 0; j < SCREEN_HEIGHT; j++) {
 					if (j == SCREEN_HEIGHT - height - 1) {
 						// Environment tiles.
-						if (Math.random() < 0.75) {
-							map[j][i] = int(Math.random() * 28) + 2;
-						}
+						//if (Math.random() < 1.0) {
+						map[j][i] = int(Math.random() * 15) + 12;
+						//}
 					}
 					if (j >= SCREEN_HEIGHT - height) {
 						map[j][i] = dirtTiles[Math.round(Math.random() * (dirtTiles.length - 1))];
