@@ -433,13 +433,13 @@
 		
 		private function zombieCollidePlayer(zombie:FlxCore, player:FlxCore): void {
 			var z:Zombie = (zombie as Zombie);
-
+			var p:Player = (player as Player);
 			if (z.alive) {
 				if (z.colHeight > 0) {
 					if (player.y + player.height + 2 > z.y + z.colHeight) {
 						z.hit();
 						FlxG.score += z.points;
-						(player as Player).velocity.y = -180;
+						(player as Player).velocity.y = -p.JUMP_HEIGHT;
 					} else {
 						return;
 					}
@@ -448,7 +448,7 @@
 						if (player.y + player.height + 2 > z.y ) {
 							z.hit();
 							FlxG.score += z.points;
-							(player as Player).velocity.y = -180;
+							(player as Player).velocity.y = -p.JUMP_HEIGHT;
 						}
 					} else {
 						this.restart();
