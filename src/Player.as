@@ -22,7 +22,7 @@
 		protected var upsideDown:Boolean = false;
 		protected var platVelocity:int;
 		protected var onPlatform:Boolean = false;
-		public var MAX_JUMPS:int = 10;
+		public var MAX_JUMPS:int = 1;
 		public var SPEED:int = 80;
 		public var JUMP_HEIGHT:int = 130;
 		protected var jumps:int = MAX_JUMPS;

@@ -41,9 +41,8 @@
 		protected const WIZARD_HEIGHT:int = 22;
 		protected const HOUSE_HEIGHT:int = 48;
 		protected const DEFAULT_PLAT_HEIGHT:int = 4;
-		public const MAP_WIDTH:int = 50;
+		public const MAP_WIDTH:int = 150;
 		protected const ZOMBIE_TYPES:int = 2;
-		protected const ZOMBIE_KILL_POINTS:int = 50;
 		protected var time:Number = 0;
 		protected var scoreText:FlxText = new FlxText(0, 0, 200, "Score: ");
 		
@@ -182,13 +181,9 @@
 			player.y = 75;
 			player.x = 100;
 			
-			FlashConnect.trace("w: " + MAP_WIDTH);
-			FlashConnect.trace("l: " + leftWizardMapLength);
-			FlashConnect.trace("r: " + rightWizardMapLength);
-			
 			FlxG.followBounds( 0, 0, TILE_SIZE * (MAP_WIDTH + leftWizardMapLength + rightWizardMapLength), 160);
 			
-			FlxG.follow(player);
+			FlxG.follow(cam);
 			this.add(scoreText);
 			scoreText.scrollFactor = new Point(0, 0);
 			
@@ -200,10 +195,10 @@
 					if (zombies[i][j] > 0) {
 						switch(zombies[i][j]) {
 							case 1:
-								zombieLayer.add(new Zombie(j * 16 + offset, i * 16 - 16, this, ballLayer, map, player));
+								zombieLayer.add(new Prisoner(j * 16 + offset, i * 16 - 16, ballLayer, player));
 								break;
 							case 2:
-								zombieLayer.add(new Soldier(j * 16 + offset, i * 16 - 16, this, ballLayer, map, player));
+								zombieLayer.add(new Soldier(j * 16 + offset, i * 16 - 16, player));
 								break;
 						}
 					}
@@ -280,7 +275,6 @@
 				}
 				out += "\n";
 			}
-			FlashConnect.trace(out);
 			return [out];
 		}
 		
@@ -351,9 +345,9 @@
 						var deltaSet:Array;
 						deltaSet = [ -1, -1, 0, 1, 1];
 						if (dirBias == "DOWN") {
-							deltaSet = [ -1, -1, -1, -1, 0, 1, 1];
+							deltaSet = [ -1, -1, -1, 0, 0, 1, 1];
 						} else if (dirBias == "UP") {
-							deltaSet = [ -1, -1, 0, 1, 1, 1, 1];
+							deltaSet = [ -1, -1, 0, 0, 1, 1, 1];
 						}
 						delta = deltaSet[Math.round(Math.random () * (deltaSet.length - 1))];
 					}
@@ -362,7 +356,7 @@
 					oldPlatLength = platLength;
 					oldDelta = delta;					
 					
-					var gaplens:Array = [0, 1, 2, 2, 3, 3, 3];
+					var gaplens:Array = [1, 2, 2, 3, 3, 3];
 					gapLength = gaplens[Math.round(Math.random() * (gaplens.length - 1))];
 					if (Math.random() < 0.3 &&  i + platLength < length + leftOffset - 1) {
 						gapLength = Math.round(Math.random() * (MAX_GAP_WITH_PLAT_LENGTH - MIN_GAP_WITH_PLAT_LENGTH)) + MIN_GAP_WITH_PLAT_LENGTH;
@@ -374,7 +368,8 @@
 							map[SCREEN_HEIGHT - platHeight + 1][i + gapLength - int(Math.random() * 1) - 2] = PLATFORM_END;
 						}
 					} 
-					if (delta < 1 && i + gapLength + platLength < length + leftOffset - 1) {
+					//delta < 1 && 
+					if (i + gapLength + platLength < length + leftOffset - 1 && platLength > 2) {
 						zombies[SCREEN_HEIGHT - platHeight - 1][i + gapLength + int(Math.random() * platLength) + 1] = int(Math.random() * ZOMBIE_TYPES) + 1;
 					}
 				}
@@ -409,7 +404,7 @@
 				}
 				zombieWallsOut += "\n";
 			}
-			FlashConnect.trace(out);
+
 			return [out, zombies, zombieWallsOut, platHeight];
 			
 		}
@@ -437,22 +432,33 @@
 		}
 		
 		private function zombieCollidePlayer(zombie:FlxCore, player:FlxCore): void {
-			//FIXME
-			if (player.y + player.height - 2 < zombie.y) {
-				zombie.kill();
-				FlxG.score += ZOMBIE_KILL_POINTS;
-				(player as Player).velocity.y = -100;
-			} else {
-				this.restart();
+			var z:Zombie = (zombie as Zombie);
+
+			if (z.alive) {
+				if (z.colHeight > 0) {
+					if (player.y + player.height + 2 > z.y + z.colHeight) {
+						z.hit();
+						FlxG.score += z.points;
+						(player as Player).velocity.y = -180;
+					} else {
+						return;
+					}
+				} else {
+					if (player.y + player.height - 2 < z.y) {
+						if (player.y + player.height + 2 > z.y ) {
+							z.hit();
+							FlxG.score += z.points;
+							(player as Player).velocity.y = -180;
+						}
+					} else {
+						this.restart();
+					}
+				}
 			}
 		}
 		
 		public function restart(): void {
-			player.y = 30;
-			player.x = 50;
-			cam.x = 40;
-			
-			//map.loadMap(generateMap(500), data_tiles, 16, 16);
+			FlxG.switchState(GameState);
 		}
 
 	}
