@@ -12,9 +12,6 @@
 		[Embed("../images/player.png")]
 		protected var PlayerGraphic:Class;
 		
-		[Embed(source = "../sound/step.mp3")] 
-		public static var stepSound:Class;
-		
 		
 		protected var MAX_PARTICLES:int = 2;
 		protected var MAX_PARTICLE_SPEED:Number = 50;
@@ -25,6 +22,8 @@
 		public var MAX_JUMPS:int = 1;
 		public var SPEED:int = 80;
 		public var JUMP_HEIGHT:int = 130;
+		public var has_control:Boolean = true;
+		public var combo:int = 1;
 		protected var jumps:int = MAX_JUMPS;
 		
 		public function Player(gameState:GameState):void {
@@ -43,39 +42,42 @@
 				velocity.x = platVelocity;
 			}
 			
-			if (FlxG.keys.RIGHT) {
-				facing = RIGHT;
-				velocity.x = SPEED;
-				if (!velocity.y) {
-					play("run");
+			
+			if (has_control) {
+				if (FlxG.keys.RIGHT) {
+					facing = RIGHT;
+					velocity.x = SPEED;
+					if (!velocity.y) {
+						play("run");
+					}
 				}
-			}
-			
-			if (FlxG.keys.LEFT) {
-				facing = LEFT;
-				velocity.x = SPEED * -1;
-				if (!velocity.y)
-					play("run");
-			}
-			
-			if (FlxG.keys.justReleased("RIGHT") || FlxG.keys.justReleased("LEFT")) {
-				play("normal");
-			}
-			
-			if (jumps == MAX_JUMPS && velocity.y && MAX_JUMPS > 1) {
-				jumps--;
-			}
-			
-			if (FlxG.keys.justPressed("X") && jumps > 0) {
-				if ((jumps == MAX_JUMPS && !velocity.y) || (jumps < MAX_JUMPS)) {
-					play("jump");
-					onPlatform = false;
-					velocity.y = JUMP_HEIGHT * -1;
+				
+				if (FlxG.keys.LEFT) {
+					facing = LEFT;
+					velocity.x = SPEED * -1;
+					if (!velocity.y)
+						play("run");
+				}
+				
+				if (FlxG.keys.justReleased("RIGHT") || FlxG.keys.justReleased("LEFT")) {
+					play("normal");
+				}
+				
+				if (jumps == MAX_JUMPS && velocity.y && MAX_JUMPS > 1) {
 					jumps--;
 				}
 				
+				if (FlxG.keys.justPressed("X") && jumps > 0) {
+					if ((jumps == MAX_JUMPS && !velocity.y) || (jumps < MAX_JUMPS)) {
+						play("jump");
+						onPlatform = false;
+						velocity.y = JUMP_HEIGHT * -1;
+						jumps--;
+					}
+					
+				}
+				
 			}
-			
 			acceleration.y = 350;
 			super.update();
 		}
@@ -91,7 +93,7 @@
 			} else {
 				onPlatform = false;
 			}
-		
+			combo = 1;
 			return super.hitFloor();
 		}
 	}

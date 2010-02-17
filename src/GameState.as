@@ -6,7 +6,6 @@
 	public class GameState extends FlxState {
 		[Embed(source = "../maps/test.txt", mimeType = "application/octet-stream")] public static var data_map:Class;
 		[Embed(source = "../images/map.png")] public static var data_tiles:Class;
-		[Embed(source = "../sound/thunder.mp3")] public static var ThunderMusic:Class;
 		[Embed(source = "../images/bg.png")] public static var bgImage:Class;
 		[Embed(source = "../images/blank.png")] public static var blankImage:Class;
 		[Embed(source = "../images/house.png")] public static var HouseGraphic:Class;
@@ -126,7 +125,7 @@
 							bgLayer.add(new FlxSprite(x * TILE_SIZE, (y + 1) * TILE_SIZE - HOUSE_HEIGHT, HouseGraphic));
 							house = false;
 						} else { 
-							wizardLayer.add(new Wizard(x * TILE_SIZE, (y + 1) * TILE_SIZE - WIZARD_HEIGHT, true));
+							wizardLayer.add(new Wizard(x * TILE_SIZE, (y + 1) * TILE_SIZE - WIZARD_HEIGHT, true, player));
 						}
 						// random grass tile
 						leftWizardMap.setTile(x, y, int(Math.random() * 15) + 12);
@@ -141,7 +140,7 @@
 					if (rightWizardMap.getTile(x, y) == PLATFORM_BEGIN || leftWizardMap.getTile(x, y) == PLATFORM_END) {
 
 						if (house) {
-							wizardLayer.add(new Wizard(x * TILE_SIZE, (y + 1) * TILE_SIZE - WIZARD_HEIGHT, false));
+							wizardLayer.add(new Wizard(x * TILE_SIZE, (y + 1) * TILE_SIZE - WIZARD_HEIGHT, false, player));
 							house = false;
 						} else {
 							bgLayer.add(new FlxSprite(x * TILE_SIZE, (y + 1) * TILE_SIZE - HOUSE_HEIGHT, HouseGraphic));
@@ -182,8 +181,7 @@
 			player.x = 100;
 			
 			FlxG.followBounds( 0, 0, TILE_SIZE * (MAP_WIDTH + leftWizardMapLength + rightWizardMapLength), 160);
-			
-			FlxG.follow(cam);
+			FlxG.follow(player);
 			this.add(scoreText);
 			scoreText.scrollFactor = new Point(0, 0);
 			
@@ -438,8 +436,9 @@
 				if (z.colHeight > 0) {
 					if (player.y + player.height + 2 > z.y + z.colHeight) {
 						z.hit();
-						FlxG.score += z.points;
-						(player as Player).velocity.y = -p.JUMP_HEIGHT;
+						FlxG.score += z.points * p.combo;
+						p.velocity.y = -p.JUMP_HEIGHT;
+						p.combo++;
 					} else {
 						return;
 					}
@@ -447,8 +446,9 @@
 					if (player.y + player.height - 2 < z.y) {
 						if (player.y + player.height + 2 > z.y ) {
 							z.hit();
-							FlxG.score += z.points;
-							(player as Player).velocity.y = -p.JUMP_HEIGHT;
+							FlxG.score += z.points * p.combo;
+							p.velocity.y = -p.JUMP_HEIGHT;
+							p.combo++;
 						}
 					} else {
 						this.restart();
