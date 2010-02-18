@@ -13,7 +13,7 @@
 		
 		protected var life:Number;
 		protected var fireAngle:Number;
-		protected var PARTICLE_MAX_LIFE:Number = 25;
+		protected var PARTICLE_MAX_LIFE:Number = 0.75;
 		
 		public function Particle(parent:FlxSprite, fireAngle:Number, speed:Number): void
 		{
@@ -27,11 +27,27 @@
 			velocity.x = Math.cos(fireAngle) * speed;
 			velocity.y = -Math.sin(fireAngle) * speed;
 			life = Math.random() * PARTICLE_MAX_LIFE;
+			
+			var red:int = 0xff0000;
+			var green:int = 0x00ff00;
+			var blue:int = 0x0000ff;
+			
+			if (Math.random() < 0.5) {
+				red *= 0;
+			}
+			if (Math.random() < 0.5) {
+				green *= 0;
+			}
+			if (Math.random() < 0.5) {
+				blue *= 0;
+			}
+			color = red + green + blue;
+			
 			exists = true;
 		}
 		
 		override public function update():void {
-			life--;
+			life -= FlxG.elapsed;
 			if (life <= 0) {
 				kill();
 			}

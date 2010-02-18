@@ -418,7 +418,6 @@
 				FlxG.score += 10;
 			}
 			scoreText.text = "Score: " + FlxG.score;
-			//leftWizardMap.collide(player);
 			FlxG.collideArray(mapLayer.children(), player);
 			FlxG.collideArrays(zombieLayer.children(), zombieLayer.children());
 			FlxG.collideArrays(mapLayer.children(), ballLayer.children());
@@ -439,6 +438,13 @@
 						FlxG.score += z.points * p.combo;
 						p.velocity.y = -p.JUMP_HEIGHT;
 						p.combo++;
+						for (var i:int = p.combo -1 ; i > 0; i-- ) {
+							this.add(new TextParticle(z.x, z.y, 50, String(z.points)));	
+						}
+						
+						for (i = 0; i < 50; i++) {
+							this.add(new Particle(p, Math.random() * 90, Math.random() * 20 + 40));	
+						}
 					} else {
 						return;
 					}
@@ -449,6 +455,13 @@
 							FlxG.score += z.points * p.combo;
 							p.velocity.y = -p.JUMP_HEIGHT;
 							p.combo++;
+							for (i  = p.combo -1 ; i > 0; i-- ) {
+								this.add(new TextParticle(z.x, z.y, 50, String(z.points)));	
+							}
+							for (i = 0; i < 50; i++) {
+								this.add(new Particle(p, Math.random() * 90, Math.random() * 20 + 40));	
+							}
+							
 						}
 					} else {
 						this.restart();
